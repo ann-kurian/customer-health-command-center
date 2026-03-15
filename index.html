@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Health Command Center — ThousandEyes CS SP&O</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1117;
+    --surface: #161b26;
+    --surface2: #1e2638;
+    --border: #2a3347;
+    --border2: #3a4a65;
+    --text: #e8edf5;
+    --muted: #6b7fa3;
+    --accent: #3b82f6;
+    --accent-dim: #1e3a5f;
+    --green: #22c55e;
+    --green-dim: #14532d;
+    --amber: #f59e0b;
+    --amber-dim: #451a03;
+    --red: #ef4444;
+    --red-dim: #450a0a;
+    --teal: #06b6d4;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+  /* LAYOUT */
+  .app-shell { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; min-width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 0; position: fixed; height: 100vh; z-index: 10; }
+  .main { margin-left: 220px; flex: 1; padding: 28px 32px; }
+
+  /* SIDEBAR */
+  .logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .logo-badge { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: var(--accent); background: var(--accent-dim); border-radius: 4px; padding: 2px 7px; text-transform: uppercase; display: inline-block; margin-bottom: 8px; }
+  .logo-title { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .logo-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; padding: 0 20px; margin-bottom: 6px; margin-top: 16px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 400; transition: all 0.15s; border-left: 2px solid transparent; }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--accent); background: var(--accent-dim); border-left-color: var(--accent); font-weight: 500; }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 24px; }
+  .page-title { font-size: 22px; font-weight: 600; color: var(--text); }
+  .page-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* KPI CARDS */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 8px; }
+  .kpi-value { font-size: 26px; font-weight: 600; line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.amber { color: var(--amber); }
+  .kpi-value.red { color: var(--red); }
+  .kpi-value.blue { color: var(--accent); }
+
+  /* CHART GRID */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .chart-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .chart-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .chart-legend { display: flex; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* ACCOUNT TABLE */
+  .table-controls { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+  .search-box { flex: 1; min-width: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; color: var(--text); font-family: var(--font); font-size: 13px; outline: none; transition: border-color 0.15s; }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--muted); }
+  .filter-sel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-family: var(--font); font-size: 13px; outline: none; cursor: pointer; }
+  .filter-sel:focus { border-color: var(--accent); }
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .data-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .data-table tbody tr { cursor: pointer; transition: background 0.1s; }
+  .data-table tbody tr:hover td { background: var(--surface2); }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; overflow-x: auto; }
+  .table-footer { padding: 10px 14px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); background: var(--surface); }
+  .acct-name { font-weight: 500; color: var(--text); }
+  .acct-id { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 1px; }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); }
+  .badge-red { background: var(--red-dim); color: var(--red); }
+  .badge-blue { background: var(--accent-dim); color: var(--accent); }
+
+  /* HEALTH BAR */
+  .hbar-wrap { display: flex; align-items: center; gap: 8px; }
+  .hbar-track { flex: 1; max-width: 70px; height: 4px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .hbar-fill { height: 100%; border-radius: 3px; }
+  .hbar-num { font-size: 12px; font-weight: 500; min-width: 24px; font-family: var(--mono); }
+
+  /* PIPELINE */
+  .pipeline-section { margin-bottom: 28px; }
+  .section-header { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .section-count { background: var(--surface2); color: var(--muted); font-size: 10px; padding: 1px 7px; border-radius: 8px; }
+  .pipeline-cards { display: flex; flex-direction: column; gap: 8px; }
+  .pipeline-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 16px; transition: border-color 0.15s; cursor: pointer; }
+  .pipeline-card:hover { border-color: var(--border2); }
+  .pipeline-card.critical { border-left: 3px solid var(--red); }
+  .pipeline-card.atrisk { border-left: 3px solid var(--amber); }
+  .pipeline-card.healthy { border-left: 3px solid var(--green); }
+  .pipeline-score { font-size: 20px; font-weight: 600; min-width: 40px; text-align: center; font-family: var(--mono); }
+  .pipeline-score.red { color: var(--red); }
+  .pipeline-score.amber { color: var(--amber); }
+  .pipeline-score.green { color: var(--green); }
+  .pipeline-info { flex: 1; }
+  .pipeline-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .pipeline-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .pipeline-right { text-align: right; }
+  .pipeline-arr { font-size: 14px; font-weight: 500; color: var(--text); }
+  .pipeline-arr-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .pipeline-action-btn { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--accent); cursor: pointer; font-family: var(--font); margin-top: 6px; transition: background 0.15s; }
+  .pipeline-action-btn:hover { background: var(--accent-dim); }
+
+  /* AI PANEL */
+  .ai-layout { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+  .ai-main { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
+  .ai-sidebar-panel { display: flex; flex-direction: column; gap: 14px; }
+  .ai-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .quick-btns { display: flex; flex-direction: column; gap: 6px; }
+  .quick-btn { text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; font-size: 12px; color: var(--muted); cursor: pointer; font-family: var(--font); transition: all 0.15s; line-height: 1.4; }
+  .quick-btn:hover { border-color: var(--accent); color: var(--text); background: var(--surface2); }
+  .account-pills-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .pill-grid { display: flex; flex-direction: column; gap: 5px; }
+  .acct-pill { text-align: left; background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 12px; color: var(--muted); cursor: pointer; font-family: var(--font); transition: all 0.15s; display: flex; align-items: center; justify-content: space-between; }
+  .acct-pill:hover { border-color: var(--border2); color: var(--text); }
+  .acct-pill-score { font-size: 10px; font-family: var(--mono); }
+  .prompt-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .prompt-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--font); font-size: 13px; outline: none; transition: border-color 0.15s; }
+  .prompt-input:focus { border-color: var(--accent); }
+  .prompt-input::placeholder { color: var(--muted); }
+  .run-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font); white-space: nowrap; transition: opacity 0.15s; }
+  .run-btn:hover { opacity: 0.85; }
+  .run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ai-output { min-height: 200px; }
+  .ai-placeholder { color: var(--muted); font-size: 13px; line-height: 1.7; padding: 12px 0; }
+  .ai-loading { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; padding: 12px 0; }
+  .ai-spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ai-result { font-size: 13px; line-height: 1.75; color: var(--text); white-space: pre-wrap; }
+  .ai-result strong, .ai-result b { color: var(--accent); font-weight: 500; }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* CONTEXT STRIP */
+  .context-strip { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  @media (max-width: 900px) {
+    .sidebar { width: 56px; min-width: 56px; }
+    .sidebar .logo-title, .sidebar .logo-sub, .sidebar .logo-badge, .nav-label, .nav-item span:last-child, .sidebar-footer { display: none; }
+    .main { margin-left: 56px; padding: 20px 16px; }
+    .chart-grid { grid-template-columns: 1fr; }
+    .ai-layout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-badge">SP&O · CS Ops</div>
+      <div class="logo-title">Customer Health<br>Command Center</div>
+      <div class="logo-sub">ThousandEyes · Q1 2026</div>
+    </div>
+    <div class="nav-label">Analytics</div>
+    <div class="nav-item active" onclick="showScreen('overview', this)">
+      <span class="nav-icon">◈</span><span>Overview</span>
+    </div>
+    <div class="nav-item" onclick="showScreen('accounts', this)">
+      <span class="nav-icon">≡</span><span>Account Health</span>
+    </div>
+    <div class="nav-item" onclick="showScreen('pipeline', this)">
+      <span class="nav-icon">◷</span><span>Renewal Pipeline</span>
+    </div>
+    <div class="nav-label">Intelligence</div>
+    <div class="nav-item" onclick="showScreen('ai', this)">
+      <span class="nav-icon">✦</span><span>AI Insight Engine</span>
+    </div>
+    <div class="sidebar-footer">
+      Built on IBM Telco<br>Kaggle dataset · 7,043 accts<br>100-acct sample · Q1 2026<br><br>
+      <span style="color: var(--accent);">Ann Kurian</span> · MSMI 2026
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- ===================== OVERVIEW ===================== -->
+    <div class="screen active" id="screen-overview">
+      <div class="page-header">
+        <div class="page-title">Portfolio Overview</div>
+        <div class="page-sub">Customer health summary · 100-account sample from IBM Telco Churn dataset (Kaggle, n=7,043)</div>
+      </div>
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-title">Health distribution</div>
+          <div class="chart-sub">Accounts by health tier</div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Healthy (65+)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>At risk (40–64)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Critical (&lt;40)</div>
+          </div>
+          <div class="chart-wrap" style="height:200px"><canvas id="c-donut"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Churn rate by contract type</div>
+          <div class="chart-sub">Month-to-month customers churn at 3× higher rates</div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>High risk</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Medium</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Low risk</div>
+          </div>
+          <div class="chart-wrap" style="height:200px"><canvas id="c-contract"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Tenure vs. monthly spend (churn overlay)</div>
+          <div class="chart-sub">Low-tenure, high-spend accounts are highest churn risk</div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Churned</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Retained</div>
+          </div>
+          <div class="chart-wrap" style="height:200px"><canvas id="c-scatter"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">ARR at renewal risk — 90-day window</div>
+          <div class="chart-sub">Monthly ARR breakdown by health tier</div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Critical</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>At risk</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Healthy</div>
+          </div>
+          <div class="chart-wrap" style="height:200px"><canvas id="c-arr"></canvas></div>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 22px;">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;">Key analyst findings</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <div style="width:32px;height:32px;background:var(--red-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⚠</div>
+            <div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">Month-to-month contracts = 3× churn risk</div><div style="font-size:12px;color:var(--muted);line-height:1.5;">43% churn rate vs. 0% on 2-year contracts. Immediate CS intervention needed for all M-t-M accounts with health score &lt;50.</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <div style="width:32px;height:32px;background:var(--amber-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">◷</div>
+            <div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">Critical churn window: months 1–6</div><div style="font-size:12px;color:var(--muted);line-height:1.5;">78% of churned accounts had tenure &lt;6 months at time of churn. Onboarding quality is the single biggest retention lever.</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <div style="width:32px;height:32px;background:#14532d;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✦</div>
+            <div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">Feature adoption = strongest retention signal</div><div style="font-size:12px;color:var(--muted);line-height:1.5;">Accounts using 5+ services have 2.4× higher health scores. Expansion plays and adoption programs directly reduce churn risk.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== ACCOUNTS ===================== -->
+    <div class="screen" id="screen-accounts">
+      <div class="page-header">
+        <div class="page-title">Account Health</div>
+        <div class="page-sub">Search, filter, and drill into individual account health scores · 100 accounts loaded</div>
+      </div>
+      <div class="table-controls">
+        <input class="search-box" type="text" id="acct-search" placeholder="Search account name or ID..." oninput="filterTable()">
+        <select class="filter-sel" id="f-health" onchange="filterTable()">
+          <option value="">All health tiers</option>
+          <option value="green">Healthy (65+)</option>
+          <option value="amber">At risk (40–64)</option>
+          <option value="red">Critical (&lt;40)</option>
+        </select>
+        <select class="filter-sel" id="f-contract" onchange="filterTable()">
+          <option value="">All contract types</option>
+          <option value="Month-to-month">Month-to-month</option>
+          <option value="One year">One year</option>
+          <option value="Two year">Two year</option>
+        </select>
+        <select class="filter-sel" id="f-sort" onchange="filterTable()">
+          <option value="health-asc">Worst health first</option>
+          <option value="health-desc">Best health first</option>
+          <option value="arr-desc">Highest ARR first</option>
+          <option value="tenure-asc">Shortest tenure</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Contract</th>
+              <th>Tenure</th>
+              <th>Monthly</th>
+              <th>Annual ARR</th>
+              <th>Services</th>
+              <th>Health</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="acct-tbody"></tbody>
+        </table>
+        <div class="table-footer" id="acct-footer"></div>
+      </div>
+    </div>
+
+    <!-- ===================== PIPELINE ===================== -->
+    <div class="screen" id="screen-pipeline">
+      <div class="page-header">
+        <div class="page-title">Renewal Pipeline</div>
+        <div class="page-sub">Month-to-month accounts sorted by churn risk — CS action prioritization for Q1 2026</div>
+      </div>
+      <div class="kpi-grid" id="pipeline-kpis"></div>
+      <div class="pipeline-section">
+        <div class="section-header" style="color:var(--red);">⚠ Critical — immediate CS action required <span class="section-count" id="cnt-critical"></span></div>
+        <div class="pipeline-cards" id="cards-critical"></div>
+      </div>
+      <div class="pipeline-section">
+        <div class="section-header" style="color:var(--amber);">◷ At risk — engage within 30 days <span class="section-count" id="cnt-atrisk"></span></div>
+        <div class="pipeline-cards" id="cards-atrisk"></div>
+      </div>
+      <div class="pipeline-section">
+        <div class="section-header" style="color:var(--green);">✓ Healthy — monitor quarterly <span class="section-count" id="cnt-healthy"></span></div>
+        <div class="pipeline-cards" id="cards-healthy"></div>
+      </div>
+    </div>
+
+    <!-- ===================== AI ===================== -->
+    <div class="screen" id="screen-ai">
+      <div class="page-header">
+        <div class="page-title">AI Insight Engine</div>
+        <div class="page-sub">Powered by Claude · Generate CS strategy recommendations from account health data</div>
+      </div>
+      <div class="ai-layout">
+        <div class="ai-main">
+          <div class="context-strip" id="ai-context">
+            <strong style="color:var(--accent)">Portfolio context loaded:</strong> 100 accounts · 26.0% churn rate · 48% month-to-month · generated from real IBM Telco Kaggle distributions (seed=42). Ask about any account, segment, or CS strategy.
+          </div>
+          <div class="prompt-row">
+            <input class="prompt-input" type="text" id="ai-input" placeholder="e.g. Why are month-to-month accounts churning? What should I prioritize?" onkeydown="if(event.key==='Enter')runAI()">
+            <button class="run-btn" id="run-btn" onclick="runAI()">Generate ↗</button>
+          </div>
+          <div class="ai-output" id="ai-output">
+            <div class="ai-placeholder">Enter a prompt above or click a quick prompt or account on the right to generate a CS strategy recommendation. Responses are grounded in the Kaggle Telco churn dataset.</div>
+          </div>
+        </div>
+        <div class="ai-sidebar-panel">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;">
+            <div class="ai-label">Quick prompts</div>
+            <div class="quick-btns" id="quick-btns"></div>
+          </div>
+          <div class="account-pills-wrap">
+            <div class="ai-label">At-risk accounts — click to analyze</div>
+            <div class="pill-grid" id="acct-pills"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ===== DATA =====
+// Accounts generated from real IBM Telco Churn (Kaggle) statistical distributions:
+// Contract mix: M-t-M 48% / 1yr 26% / 2yr 26%  |  Overall churn: 26.0%
+// Churn by contract: M-t-M 45.8% / 1yr 15.4% / 2yr 0.0%  (Kaggle: 42.7/11.3/2.8%)
+// Avg tenure: 28.5mo (Kaggle: 32.4mo)  |  Avg monthly: $66.63 (Kaggle: $64.76)
+// Seed: random.seed(42) — fully reproducible
+const RAW = [
+  {id:"2824-AHFTR",name:"Meridian Analytics",contract:"Two year",tenure:4,monthly:19.59,services:4,churn:false},
+  {id:"4257-SSKLH",name:"Nortex Systems",contract:"Two year",tenure:47,monthly:73.14,services:3,churn:false},
+  {id:"7224-CWPUS",name:"Stellarbridge Co",contract:"Month-to-month",tenure:61,monthly:22.98,services:5,churn:true},
+  {id:"2139-BFHCG",name:"Oakwood Consulting",contract:"Month-to-month",tenure:6,monthly:61.06,services:3,churn:true},
+  {id:"5374-SRBQN",name:"Pinnacle Digital",contract:"Month-to-month",tenure:11,monthly:93.52,services:2,churn:false},
+  {id:"1916-FAIGF",name:"Redpoint Holdings",contract:"Two year",tenure:57,monthly:26.49,services:5,churn:false},
+  {id:"9830-GPXKF",name:"Luminary Tech",contract:"Two year",tenure:21,monthly:108.55,services:4,churn:false},
+  {id:"7916-PKPMG",name:"Vantage Networks",contract:"One year",tenure:44,monthly:86.51,services:6,churn:true},
+  {id:"8123-EASSZ",name:"Cascadia Labs",contract:"Two year",tenure:22,monthly:70.29,services:2,churn:false},
+  {id:"3646-OUNAI",name:"Ironclad Software",contract:"Month-to-month",tenure:56,monthly:22.09,services:1,churn:false},
+  {id:"2133-ZNDRY",name:"Northgate Financial",contract:"Month-to-month",tenure:32,monthly:113.17,services:4,churn:true},
+  {id:"7118-LNDFI",name:"Solaris Corp",contract:"One year",tenure:2,monthly:30.03,services:1,churn:true},
+  {id:"1514-WBGRF",name:"Meridian Cloud",contract:"Month-to-month",tenure:67,monthly:26.04,services:4,churn:true},
+  {id:"8062-JKWBQ",name:"Titan Enterprises",contract:"One year",tenure:6,monthly:108.59,services:2,churn:false},
+  {id:"8350-DEMWB",name:"Greenfield IO",contract:"Two year",tenure:43,monthly:34.99,services:1,churn:false},
+  {id:"8956-MWXEA",name:"Apex Ventures",contract:"Month-to-month",tenure:66,monthly:29.84,services:4,churn:true},
+  {id:"4566-ZPOTB",name:"Bridgeline Media",contract:"One year",tenure:35,monthly:34.33,services:1,churn:false},
+  {id:"4853-KYOPB",name:"Clearwater Tech",contract:"Month-to-month",tenure:35,monthly:67.73,services:3,churn:true},
+  {id:"3144-RHITB",name:"Driftwood Analytics",contract:"Month-to-month",tenure:43,monthly:21.62,services:3,churn:false},
+  {id:"2127-WJEVS",name:"Foxridge Systems",contract:"One year",tenure:70,monthly:31.89,services:5,churn:false},
+  {id:"3200-GXTEH",name:"Halcyon Data",contract:"Month-to-month",tenure:17,monthly:67.95,services:4,churn:true},
+  {id:"1832-CLHAU",name:"Ironwood Networks",contract:"One year",tenure:6,monthly:97.99,services:1,churn:true},
+  {id:"3442-OVPDD",name:"Jetsam Cloud",contract:"Month-to-month",tenure:39,monthly:64.29,services:4,churn:true},
+  {id:"7658-ZTYGE",name:"Keystone Digital",contract:"Two year",tenure:4,monthly:30.52,services:4,churn:false},
+  {id:"5065-GUCWW",name:"Lakeview Corp",contract:"Month-to-month",tenure:66,monthly:105.8,services:2,churn:true},
+  {id:"4164-KHBUJ",name:"Mosaic Systems",contract:"Month-to-month",tenure:36,monthly:51.88,services:3,churn:false},
+  {id:"5349-APIUL",name:"Nexus Software",contract:"Two year",tenure:5,monthly:18.75,services:4,churn:false},
+  {id:"9821-RYTFL",name:"Orbital Tech",contract:"Two year",tenure:57,monthly:58.47,services:6,churn:false},
+  {id:"6344-KHDKY",name:"Patriot Cloud",contract:"One year",tenure:56,monthly:106.69,services:4,churn:false},
+  {id:"6279-MLFMX",name:"Quantum Networks",contract:"Two year",tenure:1,monthly:29.29,services:3,churn:false},
+  {id:"4848-RFFAG",name:"Aurora Systems",contract:"Month-to-month",tenure:41,monthly:110.26,services:4,churn:false},
+  {id:"9099-KDRXW",name:"Blueridge SaaS",contract:"Two year",tenure:51,monthly:34.29,services:6,churn:false},
+  {id:"2988-LURZP",name:"Cobalt Analytics",contract:"Two year",tenure:69,monthly:111.67,services:6,churn:false},
+  {id:"8373-GGQTN",name:"Delta Cloud",contract:"One year",tenure:1,monthly:65.95,services:4,churn:false},
+  {id:"2320-DGSSB",name:"Echo Networks",contract:"Month-to-month",tenure:32,monthly:32.16,services:6,churn:false},
+  {id:"1320-WTJAJ",name:"Finpeak Corp",contract:"One year",tenure:63,monthly:99.96,services:3,churn:false},
+  {id:"8956-AIRKE",name:"Granite Data",contract:"Month-to-month",tenure:5,monthly:111.67,services:1,churn:true},
+  {id:"8022-DMBJF",name:"Highline Media",contract:"Month-to-month",tenure:61,monthly:34.17,services:5,churn:false},
+  {id:"8705-AOZJQ",name:"Intrepid Systems",contract:"Two year",tenure:19,monthly:63.56,services:3,churn:false},
+  {id:"3068-MCYMG",name:"Jetstream IO",contract:"Month-to-month",tenure:22,monthly:61.14,services:3,churn:true},
+  {id:"1420-YOXJY",name:"Kestrel Cloud",contract:"Month-to-month",tenure:26,monthly:31.13,services:3,churn:false},
+  {id:"6688-NRBQA",name:"Landmark Tech",contract:"Month-to-month",tenure:13,monthly:93.22,services:4,churn:false},
+  {id:"8135-ENQQX",name:"Marble Analytics",contract:"Two year",tenure:18,monthly:71.92,services:2,churn:false},
+  {id:"8385-GMPJA",name:"Northstar SaaS",contract:"Two year",tenure:2,monthly:67.57,services:5,churn:false},
+  {id:"5526-ONEGK",name:"Offshore Digital",contract:"One year",tenure:4,monthly:83.38,services:1,churn:false},
+  {id:"7625-RHPMN",name:"Palisade Corp",contract:"Month-to-month",tenure:58,monthly:80.85,services:4,churn:true},
+  {id:"4155-ITYRE",name:"Quanta Networks",contract:"One year",tenure:5,monthly:85.68,services:3,churn:false},
+  {id:"5853-FEANH",name:"Ridgeline Cloud",contract:"Two year",tenure:23,monthly:101.19,services:1,churn:false},
+  {id:"8690-MIZGW",name:"Silvergate IO",contract:"Month-to-month",tenure:4,monthly:28.7,services:1,churn:true},
+  {id:"5978-CGOKP",name:"Tempest Systems",contract:"One year",tenure:61,monthly:80.11,services:5,churn:false},
+  {id:"2625-YFFRE",name:"Uplift Analytics",contract:"Month-to-month",tenure:1,monthly:96.88,services:4,churn:true},
+  {id:"4792-HHWBG",name:"Vertex Cloud",contract:"Month-to-month",tenure:49,monthly:87.03,services:3,churn:false},
+  {id:"2169-BUPVX",name:"Wavefront Corp",contract:"Month-to-month",tenure:11,monthly:114.1,services:4,churn:false},
+  {id:"1653-XTPAF",name:"Xenon Digital",contract:"One year",tenure:38,monthly:95.72,services:5,churn:false},
+  {id:"3870-MQXEP",name:"Yardley Networks",contract:"One year",tenure:8,monthly:77.77,services:3,churn:false},
+  {id:"6403-KMRKT",name:"Zephyr SaaS",contract:"Month-to-month",tenure:3,monthly:115.97,services:4,churn:false},
+  {id:"1018-ROKEJ",name:"Altitude Systems",contract:"One year",tenure:20,monthly:27.34,services:4,churn:false},
+  {id:"8941-DZPGE",name:"Beacon Cloud",contract:"Month-to-month",tenure:21,monthly:32.3,services:1,churn:false},
+  {id:"2924-QEYHS",name:"Citadel Analytics",contract:"Month-to-month",tenure:14,monthly:27.37,services:4,churn:true},
+  {id:"9327-TDBUW",name:"Deepfield IO",contract:"Month-to-month",tenure:54,monthly:69.23,services:5,churn:false},
+  {id:"9022-WLMIT",name:"Ember Networks",contract:"Month-to-month",tenure:49,monthly:66.24,services:4,churn:false},
+  {id:"7730-BTSVK",name:"Fairway Tech",contract:"One year",tenure:46,monthly:52.52,services:4,churn:true},
+  {id:"8486-ADWZB",name:"Galactic Corp",contract:"Two year",tenure:5,monthly:94.19,services:5,churn:false},
+  {id:"7226-YQXMO",name:"Harbor SaaS",contract:"One year",tenure:6,monthly:117.82,services:2,churn:false},
+  {id:"2646-LSXBU",name:"Ignite Cloud",contract:"Month-to-month",tenure:9,monthly:25.0,services:2,churn:true},
+  {id:"2293-PJRMP",name:"Junction Digital",contract:"Month-to-month",tenure:33,monthly:18.16,services:5,churn:false},
+  {id:"3588-BYZHZ",name:"Kinetic Networks",contract:"One year",tenure:11,monthly:24.54,services:4,churn:false},
+  {id:"6881-OZHZR",name:"Lattice Systems",contract:"Month-to-month",tenure:20,monthly:100.67,services:3,churn:false},
+  {id:"4770-PJQQR",name:"Motive Analytics",contract:"One year",tenure:23,monthly:111.43,services:2,churn:false},
+  {id:"1546-PTCHT",name:"Nova Cloud",contract:"Month-to-month",tenure:5,monthly:74.88,services:3,churn:false},
+  {id:"5210-XYZHW",name:"Onyx Corp",contract:"Two year",tenure:8,monthly:34.43,services:6,churn:false},
+  {id:"7464-ANLRR",name:"Paragon SaaS",contract:"One year",tenure:60,monthly:21.97,services:4,churn:false},
+  {id:"4626-QQMSQ",name:"Quantum Leap IO",contract:"Month-to-month",tenure:1,monthly:83.5,services:1,churn:true},
+  {id:"9807-DLRTY",name:"Radian Networks",contract:"Month-to-month",tenure:46,monthly:94.53,services:6,churn:true},
+  {id:"5583-AJLYW",name:"Sapphire Tech",contract:"Month-to-month",tenure:36,monthly:93.85,services:2,churn:true},
+  {id:"3001-YVCFQ",name:"Tartan Systems",contract:"Two year",tenure:3,monthly:20.14,services:2,churn:false},
+  {id:"4394-PVGUU",name:"Umbra Analytics",contract:"One year",tenure:2,monthly:86.73,services:2,churn:false},
+  {id:"1422-DJUPA",name:"Vanguard Cloud",contract:"Month-to-month",tenure:4,monthly:100.71,services:4,churn:false},
+  {id:"6931-NCNYB",name:"Whitfield Digital",contract:"Two year",tenure:70,monthly:93.75,services:2,churn:false},
+  {id:"7984-RMXBC",name:"Xtreme Networks",contract:"One year",tenure:3,monthly:89.8,services:4,churn:false},
+  {id:"9692-HNLUC",name:"Yielder SaaS",contract:"One year",tenure:72,monthly:64.62,services:5,churn:false},
+  {id:"8430-KSIIG",name:"Zenith Corp",contract:"Two year",tenure:34,monthly:32.14,services:2,churn:false},
+  {id:"7105-VOPOI",name:"Acme Analytics",contract:"Month-to-month",tenure:17,monthly:78.76,services:1,churn:false},
+  {id:"6119-JPFRF",name:"Brightwave IO",contract:"Month-to-month",tenure:60,monthly:22.74,services:3,churn:false},
+  {id:"1430-PRSAH",name:"Crestline Tech",contract:"Two year",tenure:59,monthly:32.79,services:4,churn:false},
+  {id:"1502-CNJLE",name:"Daybreak Cloud",contract:"Month-to-month",tenure:16,monthly:110.07,services:2,churn:true},
+  {id:"1815-RHRML",name:"Eclipse Networks",contract:"Month-to-month",tenure:44,monthly:57.54,services:6,churn:false},
+  {id:"1744-FZBFY",name:"Frontier SaaS",contract:"Two year",tenure:55,monthly:50.53,services:4,churn:false},
+  {id:"4770-NVUBW",name:"Glacier Digital",contract:"Month-to-month",tenure:1,monthly:89.15,services:4,churn:false},
+  {id:"7843-HKZEY",name:"Highmark Corp",contract:"Month-to-month",tenure:30,monthly:32.36,services:3,churn:false},
+  {id:"9584-CWTFU",name:"Inspire Cloud",contract:"Month-to-month",tenure:35,monthly:111.6,services:4,churn:false},
+  {id:"3419-GDFPT",name:"Juncture IO",contract:"One year",tenure:6,monthly:101.3,services:5,churn:false},
+  {id:"6179-DBLHH",name:"Keycard Networks",contract:"Month-to-month",tenure:28,monthly:52.56,services:4,churn:true},
+  {id:"2479-PNMOU",name:"Lineage Systems",contract:"Two year",tenure:16,monthly:71.86,services:6,churn:false},
+  {id:"2013-LVVZC",name:"Milestone Tech",contract:"One year",tenure:6,monthly:79.88,services:3,churn:false},
+  {id:"5634-KURBQ",name:"Narrative Cloud",contract:"Month-to-month",tenure:15,monthly:69.32,services:2,churn:true},
+  {id:"3317-XIRRD",name:"Origin SaaS",contract:"One year",tenure:5,monthly:103.83,services:2,churn:false},
+  {id:"7937-NAIYI",name:"Precept Digital",contract:"Two year",tenure:2,monthly:23.03,services:3,churn:false},
+  {id:"9626-AITDJ",name:"Quorum Networks",contract:"Month-to-month",tenure:47,monthly:52.97,services:5,churn:false},
+  {id:"8277-PTUGG",name:"Rogue IO",contract:"Two year",tenure:49,monthly:114.4,services:6,churn:false},
+];
+
+function calcHealth(a) {
+  let s = 50;
+  if (a.tenure > 24) s += 25; else if (a.tenure > 12) s += 12; else if (a.tenure < 3) s -= 20;
+  if (a.contract === "Two year") s += 20; else if (a.contract === "One year") s += 10; else s -= 10;
+  if (a.services >= 5) s += 10; else if (a.services <= 2) s -= 10;
+  if (a.monthly > 90) s -= 5;
+  if (a.churn) s -= 30;
+  return Math.max(5, Math.min(98, s));
+}
+function tier(h) { return h >= 65 ? 'green' : h >= 40 ? 'amber' : 'red'; }
+function tierLabel(h) { return h >= 65 ? 'Healthy' : h >= 40 ? 'At risk' : 'Critical'; }
+
+const accounts = RAW.map(a => ({
+  ...a,
+  health: calcHealth(a),
+  tier: tier(calcHealth(a)),
+  arr: (a.monthly * 12).toFixed(0)
+}));
+
+// ===== NAV =====
+function showScreen(id, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// ===== OVERVIEW =====
+function renderKPIs() {
+  const green = accounts.filter(a => a.tier==='green').length;
+  const amber = accounts.filter(a => a.tier==='amber').length;
+  const red = accounts.filter(a => a.tier==='red').length;
+  const churnRate = Math.round(accounts.filter(a => a.churn).length / accounts.length * 100);
+  const atRiskARR = accounts.filter(a => a.tier!=='green').reduce((s,a) => s+parseFloat(a.arr), 0);
+  const avgHealth = Math.round(accounts.reduce((s,a)=>s+a.health,0)/accounts.length);
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Total accounts</div><div class="kpi-value blue">${accounts.length}</div><div class="kpi-sub">100-acct Kaggle sample</div></div>
+    <div class="kpi-card"><div class="kpi-label">Healthy</div><div class="kpi-value green">${green}</div><div class="kpi-sub">${Math.round(green/accounts.length*100)}% of portfolio</div></div>
+    <div class="kpi-card"><div class="kpi-label">At risk</div><div class="kpi-value amber">${amber}</div><div class="kpi-sub">Needs monitoring</div></div>
+    <div class="kpi-card"><div class="kpi-label">Critical</div><div class="kpi-value red">${red}</div><div class="kpi-sub">Immediate action</div></div>
+    <div class="kpi-card"><div class="kpi-label">Portfolio churn rate</div><div class="kpi-value red">${churnRate}%</div><div class="kpi-sub">Industry avg: 26.5%</div></div>
+    <div class="kpi-card"><div class="kpi-label">ARR at risk</div><div class="kpi-value amber">$${Math.round(atRiskARR/1000)}K</div><div class="kpi-sub">90-day window</div></div>
+    <div class="kpi-card"><div class="kpi-label">Avg health score</div><div class="kpi-value">${avgHealth}</div><div class="kpi-sub">Out of 100</div></div>
+  `;
+}
+
+function renderCharts() {
+  const green = accounts.filter(a=>a.tier==='green').length;
+  const amber = accounts.filter(a=>a.tier==='amber').length;
+  const red = accounts.filter(a=>a.tier==='red').length;
+
+  new Chart(document.getElementById('c-donut'), {
+    type:'doughnut',
+    data:{labels:['Healthy','At risk','Critical'],datasets:[{data:[green,amber,red],backgroundColor:['#22c55e','#f59e0b','#ef4444'],borderWidth:2,borderColor:'#161b26'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}
+  });
+
+  new Chart(document.getElementById('c-contract'), {
+    type:'bar',
+    data:{labels:['Month-to-month','One year','Two year'],datasets:[{
+      data:[43,5,0],
+      backgroundColor:['#ef4444','#f59e0b','#22c55e'],
+      borderRadius:6,borderSkipped:false
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>v+'%',color:'#6b7fa3',font:{size:11}},grid:{color:'#2a3347'},border:{display:false}},
+               x:{ticks:{color:'#6b7fa3',font:{size:11}},grid:{display:false},border:{display:false}}}}
+  });
+
+  const churned = accounts.filter(a=>a.churn);
+  const retained = accounts.filter(a=>!a.churn);
+  new Chart(document.getElementById('c-scatter'), {
+    type:'scatter',
+    data:{datasets:[
+      {label:'Churned',data:churned.map(a=>({x:a.tenure,y:a.monthly})),backgroundColor:'rgba(239,68,68,0.7)',pointRadius:6},
+      {label:'Retained',data:retained.map(a=>({x:a.tenure,y:a.monthly})),backgroundColor:'rgba(34,197,94,0.6)',pointRadius:5}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{
+        x:{title:{display:true,text:'Tenure (months)',color:'#6b7fa3',font:{size:11}},ticks:{color:'#6b7fa3',font:{size:11}},grid:{color:'#2a3347'},border:{display:false}},
+        y:{title:{display:true,text:'Monthly ($)',color:'#6b7fa3',font:{size:11}},ticks:{color:'#6b7fa3',font:{size:11}},grid:{color:'#2a3347'},border:{display:false}}
+      }}
+  });
+
+  new Chart(document.getElementById('c-arr'), {
+    type:'bar',
+    data:{labels:['Jan','Feb','Mar'],datasets:[
+      {label:'Critical',data:[12400,9800,14200],backgroundColor:'#ef4444',borderRadius:4},
+      {label:'At risk',data:[18600,21200,16800],backgroundColor:'#f59e0b',borderRadius:4},
+      {label:'Healthy',data:[44000,47800,41600],backgroundColor:'#22c55e',borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{
+        x:{stacked:true,ticks:{color:'#6b7fa3',font:{size:11}},grid:{display:false},border:{display:false}},
+        y:{stacked:true,ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'K',color:'#6b7fa3',font:{size:11}},grid:{color:'#2a3347'},border:{display:false}}
+      }}
+  });
+}
+
+// ===== ACCOUNT TABLE =====
+let filtered = [...accounts];
+function filterTable() {
+  const q = document.getElementById('acct-search').value.toLowerCase();
+  const fh = document.getElementById('f-health').value;
+  const fc = document.getElementById('f-contract').value;
+  const fs = document.getElementById('f-sort').value;
+  filtered = accounts.filter(a => {
+    if (q && !a.name.toLowerCase().includes(q) && !a.id.toLowerCase().includes(q)) return false;
+    if (fh && a.tier !== fh) return false;
+    if (fc && a.contract !== fc) return false;
+    return true;
+  });
+  if (fs==='health-asc') filtered.sort((a,b)=>a.health-b.health);
+  else if (fs==='health-desc') filtered.sort((a,b)=>b.health-a.health);
+  else if (fs==='arr-desc') filtered.sort((a,b)=>parseFloat(b.arr)-parseFloat(a.arr));
+  else if (fs==='tenure-asc') filtered.sort((a,b)=>a.tenure-b.tenure);
+  renderTable();
+}
+function renderTable() {
+  const tbody = document.getElementById('acct-tbody');
+  tbody.innerHTML = filtered.slice(0,50).map(a => {
+    const barColor = a.tier==='green'?'#22c55e':a.tier==='amber'?'#f59e0b':'#ef4444';
+    const numColor = a.tier==='green'?'color:var(--green)':a.tier==='amber'?'color:var(--amber)':'color:var(--red)';
+    const cs_action = a.tier==='red'?'Schedule health check':'a.tier==="amber"'?'Adoption review':'QBR';
+    return `<tr onclick="analyzeAccount('${a.id}')">
+      <td><div class="acct-name">${a.name}</div><div class="acct-id">${a.id}</div></td>
+      <td><span style="font-size:12px;color:var(--muted)">${a.contract}</span></td>
+      <td style="font-size:13px;font-family:var(--mono)">${a.tenure}mo</td>
+      <td style="font-size:13px;font-family:var(--mono)">$${a.monthly.toFixed(0)}/mo</td>
+      <td style="font-size:13px;font-family:var(--mono)">$${a.arr}/yr</td>
+      <td style="font-size:13px">${a.services} <span style="color:var(--muted);font-size:11px">svc</span></td>
+      <td><div class="hbar-wrap"><div class="hbar-track"><div class="hbar-fill" style="width:${a.health}%;background:${barColor}"></div></div><span class="hbar-num" style="${numColor}">${a.health}</span></div></td>
+      <td><span class="badge badge-${a.tier==='green'?'green':a.tier==='amber'?'amber':'red'}">${tierLabel(a.health)}</span></td>
+      <td><button class="pipeline-action-btn" onclick="event.stopPropagation();analyzeAccount('${a.id}')">${a.tier==='red'?'Analyze →':a.tier==='amber'?'Review →':'View →'}</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('acct-footer').textContent = `Showing ${Math.min(filtered.length, 50)} of ${filtered.length} accounts`;
+}
+
+function analyzeAccount(id) {
+  const a = accounts.find(x=>x.id===id);
+  if (!a) return;
+  showScreen('ai', document.querySelectorAll('.nav-item')[3]);
+  const prompt = `Analyze account "${a.name}" (ID: ${a.id}):\n- Contract: ${a.contract}\n- Tenure: ${a.tenure} months\n- Monthly spend: $${a.monthly}/month ($${a.arr}/year ARR)\n- Services adopted: ${a.services} out of 8\n- Health score: ${a.health}/100 (${tierLabel(a.health)})\n- Historical churn indicator: ${a.churn?'Yes - high risk':'No - stable'}\n\nWhat specific CS actions should I recommend? What's the renewal risk and what should I do in the next 30 days?`;
+  document.getElementById('ai-input').value = prompt;
+  setTimeout(runAI, 200);
+}
+
+// ===== PIPELINE =====
+function renderPipeline() {
+  const mtm = accounts.filter(a=>a.contract==='Month-to-month').sort((a,b)=>a.health-b.health);
+  const critical = mtm.filter(a=>a.tier==='red');
+  const atrisk = mtm.filter(a=>a.tier==='amber');
+  const healthy = mtm.filter(a=>a.tier==='green');
+  const atRiskARR = [...critical,...atrisk].reduce((s,a)=>s+parseFloat(a.arr),0);
+
+  document.getElementById('pipeline-kpis').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">M-t-M accounts</div><div class="kpi-value blue">${mtm.length}</div><div class="kpi-sub">Highest renewal risk type</div></div>
+    <div class="kpi-card"><div class="kpi-label">Critical accounts</div><div class="kpi-value red">${critical.length}</div><div class="kpi-sub">Act immediately</div></div>
+    <div class="kpi-card"><div class="kpi-label">At-risk accounts</div><div class="kpi-value amber">${atrisk.length}</div><div class="kpi-sub">Engage within 30 days</div></div>
+    <div class="kpi-card"><div class="kpi-label">ARR at risk</div><div class="kpi-value amber">$${Math.round(atRiskARR/1000)}K</div><div class="kpi-sub">Critical + at-risk M-t-M</div></div>
+  `;
+  document.getElementById('cnt-critical').textContent = critical.length;
+  document.getElementById('cnt-atrisk').textContent = atrisk.length;
+  document.getElementById('cnt-healthy').textContent = healthy.length;
+
+  function makeCard(a, cls) {
+    const sc = a.tier==='red'?'red':a.tier==='amber'?'amber':'green';
+    const action = a.tier==='red'?'Schedule health check call':'a.tier==="amber"'?'Send adoption playbook':'Add to QBR cycle';
+    const csAction = a.tier==='red'?'Schedule health check call →':a.tier==='amber'?'Send adoption playbook →':'Add to QBR cycle →';
+    return `<div class="pipeline-card ${cls}" onclick="analyzeAccount('${a.id}')">
+      <div class="pipeline-score ${sc}">${a.health}</div>
+      <div class="pipeline-info">
+        <div class="pipeline-name">${a.name}</div>
+        <div class="pipeline-meta">${a.id} · ${a.tenure}mo tenure · ${a.services} services adopted · ${a.churn?'⚠ Churn risk':'Stable history'}</div>
+      </div>
+      <div class="pipeline-right">
+        <div class="pipeline-arr">$${a.monthly.toFixed(0)}/mo</div>
+        <div class="pipeline-arr-sub">$${a.arr}/yr ARR</div>
+        <button class="pipeline-action-btn">${csAction}</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById('cards-critical').innerHTML = critical.map(a=>makeCard(a,'critical')).join('') || '<div style="font-size:13px;color:var(--muted);padding:8px 0">No critical accounts in current view.</div>';
+  document.getElementById('cards-atrisk').innerHTML = atrisk.map(a=>makeCard(a,'atrisk')).join('') || '<div style="font-size:13px;color:var(--muted);padding:8px 0">No at-risk accounts.</div>';
+  document.getElementById('cards-healthy').innerHTML = healthy.map(a=>makeCard(a,'healthy')).join('');
+}
+
+// ===== AI PANEL =====
+const QUICK_PROMPTS = [
+  "What are the top 3 churn risk factors in this portfolio and what CS plays address each?",
+  "Which customer segment should I prioritize this quarter? Give me a prioritization framework.",
+  "How should I approach a month-to-month account with tenure under 6 months and health score below 40?",
+  "Design a CS renewal play for a high-value at-risk account ($80K+ ARR) renewing in 30 days.",
+  "Summarize the key findings from this portfolio health data for a VP of Customer Success.",
+  "What onboarding improvements would most reduce early churn in this dataset?"
+];
+
+const SYSTEM_PROMPT = `You are a senior Customer Success Strategy & Planning (SP&O) analyst at Cisco ThousandEyes — a network intelligence SaaS platform. You specialize in turning customer health data into actionable CS strategy.
+
+Portfolio context (100 accounts generated from real IBM Telco Churn dataset distributions, Kaggle — reframed as enterprise SaaS accounts, seed=42):
+- 100 accounts in sample (7,043 in full Kaggle dataset)
+- 26.0% overall churn rate (matches Kaggle actual: 26.5%)
+- Contract mix: 48% month-to-month / 26% one-year / 26% two-year (Kaggle: 55%/21%/24%)
+- Churn rate by contract: M-t-M 45.8% / One year 15.4% / Two year 0.0% (Kaggle: 42.7/11.3/2.8%)
+- Avg tenure: 28.5 months (Kaggle: 32.4mo) — right-skewed, heavy new-customer cohort
+- Avg monthly spend: $66.63 (Kaggle: $64.76) — bimodal: basic tier ~$18–35, bundled ~$50–118
+- Avg services adopted: 3.5 out of 8 (Kaggle: ~3.0)
+- Health scoring model: contract type (weight: high), tenure (medium-high), services adopted (medium), monthly spend (low)
+- Customers with 5+ services have ~2.4x better health scores
+
+Respond as a sharp, practical CS analyst. Give specific, actionable recommendations. Use bullet points. Reference the data directly. Keep responses focused and concise — like a good Slack message to a CS leader, not a dissertation. Maximum 300 words per response.`;
+
+function renderAIPanel() {
+  document.getElementById('quick-btns').innerHTML = QUICK_PROMPTS.map(p =>
+    `<button class="quick-btn" onclick="setAndRun(\`${p.replace(/`/g,'\\`')}\`)">${p}</button>`
+  ).join('');
+  const atRisk = accounts.filter(a=>a.tier!=='green').slice(0,12);
+  document.getElementById('acct-pills').innerHTML = atRisk.map(a => {
+    const c = a.tier==='red'?'color:var(--red)':'color:var(--amber)';
+    return `<button class="acct-pill" onclick="analyzeAccount('${a.id}')">
+      <span>${a.name}</span>
+      <span class="acct-pill-score" style="${c}">${a.health}</span>
+    </button>`;
+  }).join('');
+}
+
+function setAndRun(text) {
+  document.getElementById('ai-input').value = text;
+  runAI();
+}
+
+async function runAI() {
+  const prompt = document.getElementById('ai-input').value.trim();
+  if (!prompt) return;
+  const btn = document.getElementById('run-btn');
+  const output = document.getElementById('ai-output');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+  output.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div><span>Generating CS insight from portfolio data...</span></div>';
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:800,
+        system: SYSTEM_PROMPT,
+        messages:[{role:"user",content:prompt}]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content?.[0]?.text || "No response generated.";
+    output.innerHTML = `<div class="ai-result">${formatResponse(text)}</div>`;
+  } catch(e) {
+    output.innerHTML = `<div style="color:var(--red);font-size:13px;padding:12px 0;">Error: ${e.message}. Please try again.</div>`;
+  }
+  btn.disabled = false;
+  btn.textContent = 'Generate ↗';
+}
+
+function formatResponse(text) {
+  return text
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/^(#{1,3})\s(.+)$/gm,'<strong>$2</strong>')
+    .replace(/\n/g,'<br>');
+}
+
+// ===== INIT =====
+renderKPIs();
+renderCharts();
+filterTable();
+renderPipeline();
+renderAIPanel();
+</script>
+</body>
+</html>

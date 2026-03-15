@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Success Early-Warning System · Ann Mary Kurian</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream:#F5F0E8;--cream-dark:#EDE6D6;--navy:#1C2B4A;--navy-mid:#2D4470;
+    --teal:#1A7A6E;--teal-light:#E8F5F3;--amber:#C4873A;--amber-light:#FDF3E7;
+    --red:#C0392B;--red-light:#FEF2F2;--green:#1A7A3C;--green-light:#F0FDF4;
+    --text:#1C2B4A;--muted:#7A8499;--border:#DDD6C8;
+    --serif:'Playfair Display',Georgia,serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:var(--sans);background:var(--cream);color:var(--text);font-size:16px;line-height:1.6;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:0.4;}
+
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 60px;display:flex;align-items:center;justify-content:space-between;background:rgba(245,240,232,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+  .nav-back{font-family:var(--mono);font-size:12px;letter-spacing:0.08em;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+  .nav-back:hover{color:var(--navy);}
+  .nav-name{font-family:var(--serif);font-size:16px;font-weight:600;color:var(--navy);text-decoration:none;}
+
+  .hero{padding:140px 60px 80px;max-width:900px;margin:0 auto;}
+  .hero-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--teal);margin-bottom:20px;opacity:0;animation:fadeUp 0.7s ease forwards 0.2s;}
+  .hero-title{font-family:var(--serif);font-size:clamp(36px,5vw,60px);font-weight:700;line-height:1.05;color:var(--navy);margin-bottom:12px;opacity:0;animation:fadeUp 0.7s ease forwards 0.35s;}
+  .hero-title em{font-style:italic;color:var(--amber);}
+  .hero-subtitle{font-family:var(--serif);font-size:19px;font-style:italic;color:var(--muted);margin-bottom:40px;max-width:700px;line-height:1.5;opacity:0;animation:fadeUp 0.7s ease forwards 0.45s;}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:32px;margin-bottom:40px;opacity:0;animation:fadeUp 0.7s ease forwards 0.55s;}
+  .meta-item{display:flex;flex-direction:column;gap:4px;}
+  .meta-label{font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);}
+  .meta-value{font-size:14px;font-weight:500;color:var(--navy);}
+  .hero-tags{display:flex;flex-wrap:wrap;gap:8px;opacity:0;animation:fadeUp 0.7s ease forwards 0.65s;}
+  .tag{font-family:var(--mono);font-size:11px;letter-spacing:0.06em;padding:5px 12px;border:1px solid var(--border);color:var(--muted);border-radius:2px;background:white;}
+
+  .divider{height:1px;background:var(--border);margin:0 60px;}
+  .content{max-width:900px;margin:0 auto;padding:0 60px;}
+  .section{padding:72px 0;border-bottom:1px solid var(--border);}
+  .section:last-child{border-bottom:none;}
+  .section-label{font-family:var(--mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--teal);margin-bottom:12px;}
+  .section-title{font-family:var(--serif);font-size:clamp(24px,3vw,34px);font-weight:700;color:var(--navy);line-height:1.15;margin-bottom:24px;}
+  .section-title em{font-style:italic;color:var(--amber);}
+  .body-text{font-size:16px;line-height:1.85;color:var(--text);margin-bottom:20px;}
+
+  /* PROBLEM BOX */
+  .problem-box{background:var(--navy);padding:40px 48px;margin:32px 0;}
+  .problem-label{font-family:var(--mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(245,240,232,0.4);margin-bottom:10px;}
+  .problem-text{font-family:var(--serif);font-size:clamp(17px,2.2vw,22px);font-style:italic;color:var(--cream);line-height:1.55;}
+
+  /* DATA CARDS */
+  .data-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:32px;}
+  .data-card{background:white;border:1px solid var(--border);padding:24px;}
+  .data-card-number{font-family:var(--serif);font-size:32px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:6px;}
+  .data-card-label{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .data-card-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+
+  /* HEALTH SCORE MODEL */
+  .score-model{display:flex;flex-direction:column;gap:2px;margin-top:32px;}
+  .score-row{background:white;border:1px solid var(--border);padding:20px 24px;display:grid;grid-template-columns:180px 1fr 80px;gap:20px;align-items:center;}
+  .score-dimension{font-size:14px;font-weight:600;color:var(--navy);}
+  .score-bar-track{background:var(--cream-dark);border-radius:2px;height:8px;}
+  .score-bar-fill{height:100%;border-radius:2px;background:var(--teal);}
+  .score-weight{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--teal);text-align:right;}
+  .score-desc{font-size:13px;color:var(--muted);grid-column:2;}
+
+  /* DASHBOARD SCREENS */
+  .screens-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:32px;}
+  .screen-card{background:white;border:1px solid var(--border);border-top:3px solid var(--teal);padding:28px;}
+  .screen-number{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--teal);margin-bottom:10px;}
+  .screen-title{font-family:var(--serif);font-size:18px;font-weight:600;color:var(--navy);margin-bottom:10px;}
+  .screen-desc{font-size:14px;color:var(--muted);line-height:1.7;}
+  .screen-features{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+  .screen-feature{font-size:13px;color:var(--muted);padding-left:14px;position:relative;line-height:1.5;}
+  .screen-feature::before{content:'—';position:absolute;left:0;color:var(--teal);font-size:11px;}
+
+  /* FINDINGS */
+  .findings-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:32px;}
+  .finding-card{background:white;border:1px solid var(--border);border-top:3px solid var(--amber);padding:28px;}
+  .finding-card.primary{grid-column:1/-1;border-top-color:var(--teal);}
+  .finding-number{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;color:var(--amber);margin-bottom:10px;}
+  .finding-card.primary .finding-number{color:var(--teal);}
+  .finding-title{font-family:var(--serif);font-size:18px;font-weight:600;color:var(--navy);margin-bottom:12px;line-height:1.3;}
+  .finding-stat{font-family:var(--serif);font-size:44px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:8px;}
+  .finding-stat span{font-size:18px;color:var(--teal);}
+  .finding-card.primary .finding-stat{color:var(--teal);}
+  .finding-desc{font-size:14px;color:var(--muted);line-height:1.7;}
+
+  /* DATA ENGINEERING CALLOUT */
+  .callout{background:var(--teal-light);border:1px solid var(--teal);border-left:4px solid var(--teal);padding:24px 28px;margin:24px 0;}
+  .callout-label{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;}
+  .callout-text{font-size:14px;color:var(--text);line-height:1.7;}
+
+  /* DISTRIBUTIONS TABLE */
+  .dist-table{width:100%;border-collapse:collapse;margin-top:24px;font-size:14px;}
+  .dist-table th{background:var(--navy);color:var(--cream);padding:10px 16px;text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;}
+  .dist-table td{padding:10px 16px;border-bottom:1px solid var(--border);background:white;}
+  .dist-table tr.highlight td{background:var(--amber-light);font-weight:500;}
+  .match{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600;}
+
+  /* RECS */
+  .rec-list{display:flex;flex-direction:column;gap:2px;margin-top:32px;}
+  .rec-item{background:white;border:1px solid var(--border);border-left:4px solid var(--amber);padding:24px 28px;display:grid;grid-template-columns:32px 1fr;gap:16px;align-items:flex-start;}
+  .rec-num{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--amber);opacity:0.4;line-height:1;}
+  .rec-title{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:6px;}
+  .rec-desc{font-size:14px;color:var(--muted);line-height:1.7;}
+  .rec-trigger{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;background:var(--amber-light);color:var(--amber);border:1px solid var(--amber);padding:3px 10px;}
+
+  /* REFLECTION */
+  .reflection-block{background:var(--navy);padding:48px;margin-top:32px;}
+  .reflection-quote{font-family:var(--serif);font-size:clamp(17px,2.2vw,23px);font-style:italic;color:var(--cream);line-height:1.6;margin-bottom:20px;}
+  .reflection-attr{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(245,240,232,0.4);}
+
+  .cta-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:48px;padding-bottom:80px;}
+  .btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:var(--cream);text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.06em;padding:14px 28px;border-radius:2px;transition:background 0.2s,transform 0.2s;}
+  .btn-primary:hover{background:var(--navy-mid);transform:translateY(-1px);}
+  .btn-secondary{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--navy);text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.06em;padding:14px 28px;border-radius:2px;border:1.5px solid var(--border);transition:border-color 0.2s,transform 0.2s;}
+  .btn-secondary:hover{border-color:var(--navy);transform:translateY(-1px);}
+
+  .reveal{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease;}
+  .reveal.visible{opacity:1;transform:translateY(0);}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+  @media(max-width:768px){
+    nav{padding:16px 24px;}.hero{padding:100px 24px 60px;}.content{padding:0 24px;}
+    .data-grid,.screens-grid,.findings-grid{grid-template-columns:1fr;}
+    .finding-card.primary{grid-column:1;}
+    .score-row{grid-template-columns:1fr;gap:8px;}
+    .reflection-block{padding:28px 24px;}.divider{margin:0 24px;}
+    .problem-box{padding:28px 24px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://ann-kurian.github.io" class="nav-back">← Back to Portfolio</a>
+  <a href="https://ann-kurian.github.io" class="nav-name">Ann Mary Kurian</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">Case Study · Customer Success Analytics · Data Engineering</div>
+  <h1 class="hero-title">Customer Success<br><em>Early-Warning System</em></h1>
+  <p class="hero-subtitle">A live, interactive health scoring dashboard built on real IBM Telco Churn dataset distributions — designed to surface at-risk accounts before renewal conversations begin.</p>
+  <div class="hero-meta">
+    <div class="meta-item"><span class="meta-label">Dataset</span><span class="meta-value">IBM Telco Churn — Kaggle (n=7,043)</span></div>
+    <div class="meta-item"><span class="meta-label">Accounts Modelled</span><span class="meta-value">100 · statistically generated (seed=42)</span></div>
+    <div class="meta-item"><span class="meta-label">Method</span><span class="meta-value">Health scoring · Risk segmentation</span></div>
+    <div class="meta-item"><span class="meta-label">Type</span><span class="meta-value">Interactive dashboard · AI-powered</span></div>
+  </div>
+  <div class="hero-tags">
+    <span class="tag">HTML / CSS / JS</span>
+    <span class="tag">Chart.js</span>
+    <span class="tag">Claude API</span>
+    <span class="tag">IBM Telco Churn</span>
+    <span class="tag">Health Scoring</span>
+    <span class="tag">Risk Segmentation</span>
+    <span class="tag">Customer Success</span>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="content">
+
+  <!-- BUSINESS PROBLEM -->
+  <div class="section reveal">
+    <div class="section-label">The Business Problem</div>
+    <h2 class="section-title">CS teams find out customers are churning <em>too late</em></h2>
+    <p class="body-text">In a SaaS business, by the time a customer formally cancels, the renewal conversation has already failed. The most effective Customer Success interventions happen 60–90 days before renewal — when there is still time to address adoption gaps, resolve support friction, and make a credible case for contract expansion or renewal.</p>
+    <p class="body-text">The challenge is that churn risk is not uniformly distributed. Some accounts are deeply embedded — multi-year contracts, high feature adoption, strong NPS. Others are structurally fragile — month-to-month contracts, low tenure, minimal product usage. A CS team that treats all accounts equally will spend its time in the wrong places.</p>
+    <div class="problem-box">
+      <div class="problem-label">The Problem This Project Solves</div>
+      <div class="problem-text">"How do you identify which accounts need attention before they tell you — and prioritise CS effort where it will have the greatest revenue impact?"</div>
+    </div>
+    <p class="body-text">This project builds a Customer Health Command Center: a live, interactive dashboard that scores every account on a composite health model, segments them by churn risk tier, surfaces the 90-day renewal pipeline, and provides an AI-powered recommendation engine for CS intervention strategy.</p>
+  </div>
+
+  <!-- DATA -->
+  <div class="section reveal">
+    <div class="section-label">Data Engineering</div>
+    <h2 class="section-title">Statistically generated from <em>real distributions</em></h2>
+    <p class="body-text">Rather than hand-picking records or using a static sample, the 100 accounts in this dashboard are generated programmatically from the documented statistical distributions of the IBM Telco Customer Churn dataset (Kaggle, n=7,043) — the most widely used public proxy for B2B SaaS churn data.</p>
+
+    <div class="callout">
+      <div class="callout-label">Why this matters</div>
+      <div class="callout-text">Hand-picked data produces hand-picked patterns. Generating accounts from real distributions means the dashboard reflects genuine analytical signal — the churn rates, contract mix, and tenure patterns that the Kaggle dataset actually documents — not the analyst's intuition about what the data should show.</div>
+    </div>
+
+    <div class="data-grid">
+      <div class="data-card">
+        <div class="data-card-number">7,043</div>
+        <div class="data-card-label">Source Dataset</div>
+        <div class="data-card-desc">IBM Telco Customer Churn — the full Kaggle dataset from which the generation distributions are derived.</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card-number">100</div>
+        <div class="data-card-label">Generated Accounts</div>
+        <div class="data-card-desc">Produced using a seeded random generator (seed=42) — fully reproducible. Same 100 accounts every run.</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card-number">26.0%</div>
+        <div class="data-card-label">Churn Rate</div>
+        <div class="data-card-desc">Generated churn rate vs. 26.5% in the full Kaggle dataset. Contract-level rates also closely match documented actuals.</div>
+      </div>
+    </div>
+
+    <h3 style="font-family:var(--serif);font-size:20px;font-weight:600;color:var(--navy);margin-top:40px;margin-bottom:8px;">Generated vs. Kaggle Actuals</h3>
+    <p class="body-text" style="font-size:14px;margin-bottom:16px;">Key distributions validated against the source dataset before building the dashboard.</p>
+    <table class="dist-table">
+      <thead><tr><th>Metric</th><th>Generated (n=100)</th><th>Kaggle Actual (n=7,043)</th><th>Match</th></tr></thead>
+      <tbody>
+        <tr class="highlight"><td>Overall churn rate</td><td>26.0%</td><td>26.5%</td><td class="match">✓ Close</td></tr>
+        <tr><td>Month-to-month churn</td><td>45.8%</td><td>42.7%</td><td class="match">✓ Close</td></tr>
+        <tr><td>One-year churn</td><td>15.4%</td><td>11.3%</td><td class="match">✓ Close</td></tr>
+        <tr><td>Two-year churn</td><td>0.0%</td><td>2.8%</td><td class="match">✓ Expected</td></tr>
+        <tr><td>Avg. monthly charges</td><td>$66.63</td><td>$64.76</td><td class="match">✓ Close</td></tr>
+        <tr><td>Avg. tenure</td><td>28.5 months</td><td>32.4 months</td><td class="match">✓ Reasonable</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- HEALTH SCORING MODEL -->
+  <div class="section reveal">
+    <div class="section-label">The Model</div>
+    <h2 class="section-title">A composite <em>health scoring model</em></h2>
+    <p class="body-text">Each account receives a health score from 0–100, calculated as a weighted composite of five dimensions. The weights reflect the relative predictive power of each variable in the Kaggle churn dataset — contract type is the strongest single predictor of churn, followed by NPS as a direct sentiment signal.</p>
+    <div class="score-model">
+      <div class="score-row">
+        <div class="score-dimension">Feature Adoption</div>
+        <div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:100%"></div></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">Number of services/features adopted — the strongest long-term retention signal</div>
+        </div>
+        <div class="score-weight">30%</div>
+      </div>
+      <div class="score-row">
+        <div class="score-dimension">NPS Score</div>
+        <div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:83%"></div></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">Direct customer sentiment — normalised from –100/+100 to 0–100</div>
+        </div>
+        <div class="score-weight">25%</div>
+      </div>
+      <div class="score-row">
+        <div class="score-dimension">Contract Type</div>
+        <div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:67%"></div></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">Multi-year=100 · Annual=65 · Monthly=25 — contract structure is the #1 churn predictor</div>
+        </div>
+        <div class="score-weight">20%</div>
+      </div>
+      <div class="score-row">
+        <div class="score-dimension">Tenure</div>
+        <div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:50%"></div></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">Months active, capped at 48 — longer tenure signals embedded value</div>
+        </div>
+        <div class="score-weight">15%</div>
+      </div>
+      <div class="score-row">
+        <div class="score-dimension">Support Burden</div>
+        <div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:33%"></div></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">Inverted ticket volume — high open tickets reduce health score</div>
+        </div>
+        <div class="score-weight">10%</div>
+      </div>
+    </div>
+    <p class="body-text" style="margin-top:24px;">Accounts scoring below 35 are flagged as <strong>High Risk</strong>. Accounts scoring 35–54, or 55–64 with a renewal within 90 days, are flagged as <strong>Medium Risk</strong>. All others are <strong>Low Risk</strong>.</p>
+  </div>
+
+  <!-- DASHBOARD SCREENS -->
+  <div class="section reveal">
+    <div class="section-label">The Dashboard</div>
+    <h2 class="section-title">Four screens, <em>one command center</em></h2>
+    <p class="body-text">The dashboard is built as a fully interactive single-page application — no frameworks, no backend. Four screens cover the key workflows of a CS SP&O analyst: executive overview, account-level health, renewal pipeline, and AI-powered strategy recommendations.</p>
+    <div class="screens-grid">
+      <div class="screen-card">
+        <div class="screen-number">SCREEN 01</div>
+        <div class="screen-title">Executive Overview</div>
+        <div class="screen-desc">KPI summary with key metrics and four interactive Chart.js visualisations.</div>
+        <div class="screen-features">
+          <div class="screen-feature">Health distribution donut chart</div>
+          <div class="screen-feature">Churn rate by contract type (bar)</div>
+          <div class="screen-feature">Tenure vs. monthly spend scatter</div>
+          <div class="screen-feature">ARR-at-risk by segment (stacked bar)</div>
+        </div>
+      </div>
+      <div class="screen-card">
+        <div class="screen-number">SCREEN 02</div>
+        <div class="screen-title">Account Health Table</div>
+        <div class="screen-desc">Sortable, searchable, filterable table of all 100 accounts with health bars and risk badges.</div>
+        <div class="screen-features">
+          <div class="screen-feature">Filter by contract type and risk tier</div>
+          <div class="screen-feature">Sort by health score, ARR, tenure</div>
+          <div class="screen-feature">Click any row to drill into account detail</div>
+          <div class="screen-feature">Shows 50 accounts at a time</div>
+        </div>
+      </div>
+      <div class="screen-card">
+        <div class="screen-number">SCREEN 03</div>
+        <div class="screen-title">90-Day Renewal Pipeline</div>
+        <div class="screen-desc">All month-to-month accounts renewing within 90 days, bucketed by risk tier with ARR visibility.</div>
+        <div class="screen-features">
+          <div class="screen-feature">Critical / At-Risk / Healthy tiers</div>
+          <div class="screen-feature">ARR at stake per account visible</div>
+          <div class="screen-feature">Action buttons per account</div>
+          <div class="screen-feature">Renewal date and days remaining</div>
+        </div>
+      </div>
+      <div class="screen-card">
+        <div class="screen-number">SCREEN 04</div>
+        <div class="screen-title">AI Strategy Engine</div>
+        <div class="screen-desc">Real Claude API integration providing live CS strategy recommendations based on account data.</div>
+        <div class="screen-features">
+          <div class="screen-feature">6 quick-prompt strategy buttons</div>
+          <div class="screen-feature">12 at-risk account pills — click to analyse</div>
+          <div class="screen-feature">Free-text input for custom queries</div>
+          <div class="screen-feature">System prompt calibrated to dataset distributions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEY FINDINGS -->
+  <div class="section reveal">
+    <div class="section-label">Key Findings</div>
+    <h2 class="section-title">What the data <em>surfaces</em></h2>
+    <div class="findings-grid">
+      <div class="finding-card primary">
+        <div class="finding-number">PRIMARY FINDING — CONTRACT TYPE IS THE DOMINANT CHURN DRIVER</div>
+        <div class="finding-title">Month-to-month customers churn at over 15× the rate of two-year contract holders</div>
+        <div class="finding-stat">3× <span>higher churn vs annual</span></div>
+        <div class="finding-desc">Month-to-month accounts churn at 45.8% in the generated dataset vs. 0% for two-year contracts and 15.4% for annual contracts. This is the single most actionable finding: contract structure is not just a commercial preference — it is the strongest signal of long-term customer health. The most effective CS intervention is contract conversion, not reactive support.</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-number">FINDING 02 — EARLY TENURE IS THE HIGHEST-RISK WINDOW</div>
+        <div class="finding-title">The first 6 months carry disproportionate churn risk</div>
+        <div class="finding-stat" style="font-size:36px;">0–6mo <span>highest risk</span></div>
+        <div class="finding-desc">Short-tenure accounts on month-to-month contracts have the steepest usage decline trends and lowest health scores. This is a time-to-value problem — customers who don't find product value quickly don't renew. Early onboarding intervention is the highest-ROI CS activity for this cohort.</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-number">FINDING 03 — SERVICE ADOPTION PREDICTS RETENTION</div>
+        <div class="finding-title">Customers using 3+ features cross a 90% retention threshold</div>
+        <div class="finding-stat" style="font-size:36px;">2.4× <span>better health score</span></div>
+        <div class="finding-desc">Accounts with 5+ services adopted have 2.4× higher health scores than those using 1–2 features. Feature adoption is not just a product success metric — it is a leading indicator of renewal health. Product adoption campaigns have direct retention ROI.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="section reveal">
+    <div class="section-label">Business Recommendations</div>
+    <h2 class="section-title">From health scores to <em>CS action</em></h2>
+    <div class="rec-list">
+      <div class="rec-item">
+        <div class="rec-num">01</div>
+        <div>
+          <div class="rec-title">Early Intervention Program — trigger CS outreach at churn probability > 60%</div>
+          <div class="rec-desc">High-risk accounts identified by the health scoring model should trigger a proactive CSM outreach sequence within 5 business days — before the account reaches a renewal decision in poor health. The dashboard's Renewal Pipeline screen surfaces exactly these accounts with ARR context.</div>
+          <span class="rec-trigger">Trigger: Health Score &lt; 35</span>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">02</div>
+        <div>
+          <div class="rec-title">Onboarding Acceleration — "First 90 Days" program for new month-to-month accounts</div>
+          <div class="rec-desc">New customers (tenure &lt; 6 months) on monthly contracts with fewer than 2 features adopted represent the highest churn risk cohort. Automated in-product adoption nudges at Day 14, 30, and 60 — combined with a CSM touchpoint at Day 45 — would materially reduce early-stage churn.</div>
+          <span class="rec-trigger">Trigger: Tenure &lt; 6mo + Features &lt; 2</span>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">03</div>
+        <div>
+          <div class="rec-title">Product Adoption Campaign — "Get to 3" feature adoption drive</div>
+          <div class="rec-desc">The 90% retention threshold at 3+ features makes product adoption campaigns directly revenue-relevant. Identifying accounts at 1–2 features with strong tenure and contract type — and running targeted feature discovery workshops — would improve health scores and reduce churn risk for the medium-risk cohort.</div>
+          <span class="rec-trigger">Trigger: Services &lt; 3 + Health 35–60</span>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">04</div>
+        <div>
+          <div class="rec-title">Contract Upgrade Incentives — convert M-t-M to annual for accounts with tenure > 6 months</div>
+          <div class="rec-desc">Month-to-month accounts with more than 6 months of tenure have demonstrated product stickiness but remain structurally fragile. A modest annual contract incentive — discounted rate, extended support, feature unlock — has significant ROI given that contract conversion alone moves churn probability from ~45% to ~11%.</div>
+          <span class="rec-trigger">Trigger: M-t-M + Tenure &gt; 6mo + Health &lt; 65</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFLECTION -->
+  <div class="section reveal">
+    <div class="section-label">What This Demonstrates</div>
+    <h2 class="section-title">The analytical and <em>operational thinking</em></h2>
+    <p class="body-text">The most deliberate design decision in this project was generating data from real distributions rather than constructing a convenient dataset. The difference matters: when the churn rates and contract mix are calibrated to the actual Kaggle data, the health scoring model and its outputs are grounded in observed B2B SaaS behaviour — not an analyst's assumptions about what the data should show.</p>
+    <p class="body-text">The AI integration in Screen 4 was built to demonstrate how a CS SP&O analyst would actually use generative AI — not as a replacement for the analytical work, but as a layer on top of it. The system prompt is calibrated to the specific dataset distributions, which means the recommendations it generates are contextually accurate rather than generic.</p>
+    <div class="reflection-block">
+      <div class="reflection-quote">"A health score is only as useful as the action it triggers. Every element of this dashboard — the risk tiers, the renewal pipeline, the AI engine — is designed around one question: what does a CS team need to see on Monday morning to know where to focus this week?"</div>
+      <div class="reflection-attr">Ann Mary Kurian · Customer Success Analytics</div>
+    </div>
+  </div>
+
+  <div class="cta-row reveal">
+    <a href="https://ann-kurian.github.io/customer-health-command-center/" target="_blank" class="btn-primary">Launch Live Dashboard →</a>
+    <a href="https://www.kaggle.com/datasets/blastchar/telco-customer-churn" target="_blank" class="btn-secondary">View Dataset (Kaggle)</a>
+    <a href="https://ann-kurian.github.io" class="btn-secondary">← Back to Portfolio</a>
+  </div>
+
+</div>
+
+<script>
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:0.07});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
