@@ -279,46 +279,22 @@
       <div class="screen-card">
         <div class="screen-number">SCREEN 01</div>
         <div class="screen-title">Executive Overview</div>
-        <div class="screen-desc">KPI summary with key metrics and four interactive Chart.js visualisations.</div>
-        <div class="screen-features">
-          <div class="screen-feature">Health distribution donut chart</div>
-          <div class="screen-feature">Churn rate by contract type (bar)</div>
-          <div class="screen-feature">Tenure vs. monthly spend scatter</div>
-          <div class="screen-feature">ARR-at-risk by segment (stacked bar)</div>
-        </div>
+        <div class="screen-desc">A summary view of the full account portfolio — key health metrics at a glance with four data visualisations showing how churn risk, contract type, tenure, and revenue exposure are distributed across accounts.</div>
       </div>
       <div class="screen-card">
         <div class="screen-number">SCREEN 02</div>
         <div class="screen-title">Account Health Table</div>
-        <div class="screen-desc">Sortable, searchable, filterable table of all 100 accounts with health bars and risk badges.</div>
-        <div class="screen-features">
-          <div class="screen-feature">Filter by contract type and risk tier</div>
-          <div class="screen-feature">Sort by health score, ARR, tenure</div>
-          <div class="screen-feature">Click any row to drill into account detail</div>
-          <div class="screen-feature">Shows 50 accounts at a time</div>
-        </div>
+        <div class="screen-desc">A searchable, sortable table of all 100 accounts — each showing its health score, risk tier, contract type, and tenure. Filter by risk or contract type to zero in on the accounts that need attention.</div>
       </div>
       <div class="screen-card">
         <div class="screen-number">SCREEN 03</div>
         <div class="screen-title">90-Day Renewal Pipeline</div>
-        <div class="screen-desc">All month-to-month accounts renewing within 90 days, bucketed by risk tier with ARR visibility.</div>
-        <div class="screen-features">
-          <div class="screen-feature">Critical / At-Risk / Healthy tiers</div>
-          <div class="screen-feature">ARR at stake per account visible</div>
-          <div class="screen-feature">Action buttons per account</div>
-          <div class="screen-feature">Renewal date and days remaining</div>
-        </div>
+        <div class="screen-desc">A focused view of accounts renewing within the next 90 days, grouped by risk tier. Shows the revenue at stake per account so CS teams can prioritise outreach before renewal conversations begin.</div>
       </div>
       <div class="screen-card">
         <div class="screen-number">SCREEN 04</div>
         <div class="screen-title">AI Strategy Engine</div>
-        <div class="screen-desc">Real Claude API integration providing live CS strategy recommendations based on account data.</div>
-        <div class="screen-features">
-          <div class="screen-feature">6 quick-prompt strategy buttons</div>
-          <div class="screen-feature">12 at-risk account pills — click to analyse</div>
-          <div class="screen-feature">Free-text input for custom queries</div>
-          <div class="screen-feature">System prompt calibrated to dataset distributions</div>
-        </div>
+        <div class="screen-desc">An AI-powered recommendation layer built on top of the account data. Ask strategy questions, click on at-risk accounts, or type a custom query — and get actionable CS recommendations in response. Requires an active internet connection; the AI engine makes live API calls and will not function in offline or restricted network environments.</div>
       </div>
     </div>
   </div>
@@ -393,8 +369,8 @@
   <div class="section reveal">
     <div class="section-label">What This Demonstrates</div>
     <h2 class="section-title">The analytical and <em>operational thinking</em></h2>
-    <p class="body-text">The most deliberate design decision in this project was generating data from real distributions rather than constructing a convenient dataset. The difference matters: when the churn rates and contract mix are calibrated to the actual Kaggle data, the health scoring model and its outputs are grounded in observed B2B SaaS behaviour — not an analyst's assumptions about what the data should show.</p>
-    <p class="body-text">The AI integration in Screen 4 was built to demonstrate how a CS analyst would actually use generative AI — not as a replacement for the analytical work, but as a layer on top of it. The system prompt is calibrated to the specific dataset distributions, which means the recommendations it generates are contextually accurate rather than generic.</p>
+    <p class="body-text">The most deliberate design decision in this project was generating accounts from documented statistical distributions rather than constructing a convenient sample. This distinction is analytically meaningful: when churn rates, contract mix, and tenure patterns are calibrated to the actual Kaggle data, the health scoring model reflects real B2B SaaS behaviour rather than assumed patterns.</p>
+    <p class="body-text">The AI layer in Screen 4 was built to show how generative AI fits within — not instead of — structured analytical work. The system prompt is grounded in the specific dataset distributions, ensuring that the recommendations produced are contextually relevant rather than generic responses to surface-level prompts.</p>
     <div class="reflection-block">
       <div class="reflection-quote">"A health score is only as useful as the action it triggers. Every element of this dashboard — the risk tiers, the renewal pipeline, the AI engine — is designed around one question: what does a CS team need to see on Monday morning to know where to focus this week?"</div>
       <div class="reflection-attr">Ann Mary Kurian · Customer Success Analytics</div>
