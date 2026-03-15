@@ -284,7 +284,7 @@
         <div class="page-sub">Search, filter, and drill into individual account health scores · 100 accounts loaded</div>
       </div>
       <div class="table-controls">
-        <input class="search-box" type="text" id="acct-search" placeholder="Search account name or ID..." oninput="filterTable()">
+        <input class="search-box" type="text" id="acct-search" placeholder="Search account name or ID..." oninput="debounceSearch()">
         <select class="filter-sel" id="f-health" onchange="filterTable()">
           <option value="">All health tiers</option>
           <option value="green">Healthy (65+)</option>
@@ -591,6 +591,12 @@ function renderCharts() {
 }
 
 // ===== ACCOUNT TABLE =====
+let searchTimeout;
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(filterTable, 150);
+}
+
 let filtered = [...accounts];
 function filterTable() {
   const q = document.getElementById('acct-search').value.toLowerCase();
@@ -614,7 +620,7 @@ function renderTable() {
   tbody.innerHTML = filtered.slice(0,50).map(a => {
     const barColor = a.tier==='green'?'#22c55e':a.tier==='amber'?'#f59e0b':'#ef4444';
     const numColor = a.tier==='green'?'color:var(--green)':a.tier==='amber'?'color:var(--amber)':'color:var(--red)';
-    const cs_action = a.tier==='red'?'Schedule health check':'a.tier==="amber"'?'Adoption review':'QBR';
+    const cs_action = a.tier==='red'?'Schedule health check':a.tier==='amber'?'Adoption review':'QBR';
     return `<tr onclick="analyzeAccount('${a.id}')">
       <td><div class="acct-name">${a.name}</div><div class="acct-id">${a.id}</div></td>
       <td><span style="font-size:12px;color:var(--muted)">${a.contract}</span></td>
