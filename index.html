@@ -350,7 +350,7 @@
     <div class="screen" id="screen-ai">
       <div class="page-header">
         <div class="page-title">AI Insight Engine</div>
-        <div class="page-sub">Powered by Claude · Generate CS strategy recommendations from account health data</div>
+        <div class="page-sub">CS Strategy Recommendations · Grounded in portfolio health data</div>
       </div>
       <div class="ai-layout">
         <div class="ai-main">
@@ -729,7 +729,125 @@ function setAndRun(text) {
   runAI();
 }
 
-async function runAI() {
+// ===== STATIC AI RESPONSES =====
+const STATIC_RESPONSES = {
+  "What are the top 3 churn risk factors in this portfolio and what CS plays address each?": `<strong>Top 3 Churn Risk Factors — Portfolio Analysis</strong><br><br>
+<strong>1. Contract Type (Highest Impact)</strong><br>
+Month-to-month accounts churn at 45.8% vs 15.4% for annual and 0% for two-year. Nearly half your M-t-M base is at risk every single renewal cycle.<br>
+<em>CS Play:</em> Run a contract conversion campaign for M-t-M accounts with tenure &gt;6 months. Offer a modest annual discount (10–15%) — the ARR uplift from reduced churn far outweighs the discount cost.<br><br>
+<strong>2. Low Feature Adoption</strong><br>
+Accounts using 1–2 services have 2.4× worse health scores than those at 5+. Low adoption signals that customers haven't found product value — they'll cancel at the next friction point.<br>
+<em>CS Play:</em> Identify all accounts at &lt;3 services adopted. Run targeted feature discovery workshops or in-product nudges at Day 14/30/60 of tenure.<br><br>
+<strong>3. Early Tenure (&lt;6 Months)</strong><br>
+New customers on M-t-M contracts show the steepest health decline. The first 90 days are a time-to-value problem — customers who don't see ROI quickly don't renew.<br>
+<em>CS Play:</em> Dedicated onboarding CSM touchpoint at Day 14 and Day 45 for all new M-t-M accounts. Goal: get to 3+ services adopted before Day 60.`,
+
+  "Which customer segment should I prioritize this quarter? Give me a prioritization framework.": `<strong>Q1 Prioritization Framework — Portfolio Segments</strong><br><br>
+<strong>Tier 1 — Act This Week</strong><br>
+Red-tier M-t-M accounts renewing within 90 days. These are your highest-probability churn events with recoverable ARR. Schedule health check calls within 5 business days. No cold outreach — personal CSM contact only.<br><br>
+<strong>Tier 2 — Act This Month</strong><br>
+Amber-tier accounts (health 35–54) regardless of contract type. These accounts are fragile but not yet lost. Focus on adoption gaps — get them to 3+ services before the next renewal cycle.<br><br>
+<strong>Tier 3 — Maintain & Expand</strong><br>
+Green-tier accounts with 5+ services adopted and multi-year contracts. Low churn risk but high expansion potential. Route to QBR cycle for upsell conversations — these are your safest expansion bets.<br><br>
+<strong>What to deprioritize:</strong> Red-tier accounts with &lt;3 months tenure and 1 service adopted on M-t-M. Recovery cost is high and probability is low — triage quickly and escalate to leadership if ARR justifies it.`,
+
+  "How should I approach a month-to-month account with tenure under 6 months and health score below 40?": `<strong>Playbook: Early-Stage M-t-M Account, Health &lt;40</strong><br><br>
+This is your highest-risk cohort. Short tenure + M-t-M + low health = active churn candidate. Move fast.<br><br>
+<strong>Days 1–5: Diagnose</strong><br>
+— Review services adopted (likely 1–2). This is a feature activation problem, not a satisfaction problem.<br>
+— Check open support tickets. Unresolved friction is the #1 early-churn trigger.<br>
+— Book a 20-minute CSM discovery call. Frame as "onboarding check-in," not "renewal conversation."<br><br>
+<strong>Days 6–14: Activate</strong><br>
+— Identify the 1 feature most relevant to their use case. Walk them through it live.<br>
+— Set a 30-day success milestone: "By [date], you'll have X configured and running."<br>
+— Offer a free onboarding session with a product specialist if available.<br><br>
+<strong>Day 30: Evaluate</strong><br>
+— If now at 3+ services: move to standard renewal track and initiate annual contract conversation.<br>
+— If still at 1–2 services: escalate to CSM manager. Consider a short-term pricing incentive to buy time for activation.`,
+
+  "Design a CS renewal play for a high-value at-risk account ($80K+ ARR) renewing in 30 days.": `<strong>30-Day Renewal Play — High-Value At-Risk Account</strong><br><br>
+At $80K+ ARR, this account warrants executive involvement. A standard CSM renewal motion is not enough.<br><br>
+<strong>Week 1: Executive Alignment</strong><br>
+— CSM + CS Director joint outreach to the economic buyer (not just the day-to-day contact).<br>
+— Frame the conversation around business outcomes achieved, not product features.<br>
+— Request a 45-minute "Partnership Review" — not a renewal call.<br><br>
+<strong>Week 2: Value Documentation</strong><br>
+— Prepare a tailored Business Review deck: usage metrics, time saved, outcomes tied to their stated goals at onboarding.<br>
+— Quantify ROI wherever possible. If data is limited, use industry benchmarks.<br>
+— Identify expansion opportunities to bring to the table — position renewal as a growth conversation.<br><br>
+<strong>Week 3: Commercial Discussion</strong><br>
+— Present multi-year renewal options with a clear value incentive (not a discount — a value add).<br>
+— If they push back on price: offer an expanded services package or dedicated support tier instead of reducing ARR.<br><br>
+<strong>Week 4: Close or Escalate</strong><br>
+— If not closed: VP of CS personal outreach. This is a relationship save, not a transaction.`,
+
+  "Summarize the key findings from this portfolio health data for a VP of Customer Success.": `<strong>Portfolio Health Summary — VP CS Briefing</strong><br><br>
+<strong>Overall:</strong> 100-account portfolio with 26% churn rate, closely aligned with industry baseline (Kaggle: 26.5%). Churn is heavily concentrated and therefore addressable.<br><br>
+<strong>Key Finding 1 — Contract Mix is the Primary Risk Driver</strong><br>
+48% of accounts are month-to-month with a 45.8% churn rate. This cohort represents the majority of preventable churn. Reducing M-t-M concentration by 10 percentage points would meaningfully move portfolio health.<br><br>
+<strong>Key Finding 2 — Feature Adoption is a Leading Indicator</strong><br>
+Accounts at 5+ services adopted show 2.4× better health scores. Current avg adoption is 3.5/8. Closing the gap to 5 for at-risk accounts is the highest-ROI CS intervention.<br><br>
+<strong>Key Finding 3 — Early Tenure is the Highest-Churn Window</strong><br>
+New M-t-M accounts (&lt;6 months) with low adoption are disproportionately represented in the red tier. An onboarding intervention program for this cohort would reduce early churn at low marginal cost.<br><br>
+<strong>Recommended Focus:</strong> Contract conversion campaign + adoption activation for the amber/red M-t-M cohort. Estimated impact: 8–12 accounts recovered from churn risk over 90 days.`,
+
+  "What onboarding improvements would most reduce early churn in this dataset?": `<strong>Onboarding Improvements — Early Churn Reduction</strong><br><br>
+Early churn (&lt;6 months) in this portfolio is almost entirely a time-to-value problem. Customers on M-t-M contracts who don't reach 3+ services adopted within the first 60 days are the dominant churn cohort.<br><br>
+<strong>Highest-Impact Improvements:</strong><br><br>
+<strong>1. Day-14 Activation Check</strong><br>
+Automated trigger at Day 14: if services adopted &lt;2, route to CSM for a 15-minute activation call. Don't wait for the customer to ask for help.<br><br>
+<strong>2. "First Win" Framework</strong><br>
+Define one high-value use case per customer segment. Onboarding success = customer achieves that first win within 30 days. Build your onboarding playbook backwards from that outcome.<br><br>
+<strong>3. Day-45 Health Check</strong><br>
+Mid-cycle CSM touchpoint at Day 45 (before the first renewal risk window). Agenda: review usage, unlock one additional feature, set a 60-day milestone.<br><br>
+<strong>4. Remove Friction from Feature Discovery</strong><br>
+Low adoption often reflects discoverability, not interest. In-product tooltips and contextual prompts at login for users who haven't activated core features reduce activation cost significantly.<br><br>
+<strong>Expected outcome:</strong> Moving new accounts from avg 2.1 to 3.5 services in the first 60 days would shift a meaningful portion of the early-churn cohort from red to amber tier.`
+};
+
+function getStaticResponse(prompt, accountId) {
+  // Account-specific response
+  if (accountId) {
+    const a = accounts.find(x => x.id === accountId);
+    if (!a) return null;
+    const tier = a.tier === 'red' ? 'High Risk' : a.tier === 'amber' ? 'Medium Risk' : 'Low Risk';
+    const urgency = a.tier === 'red' ? 'Immediate action required.' : a.tier === 'amber' ? 'Engage within 30 days.' : 'Maintain and monitor.';
+    const action = a.tier === 'red'
+      ? 'Schedule a health check call this week. Review open support tickets. Focus the conversation on feature activation — get to 3+ services before next renewal cycle.'
+      : a.tier === 'amber'
+      ? 'Send a targeted adoption playbook for their underused features. Book a 30-minute discovery call to identify friction points. Set a 30-day activation milestone.'
+      : 'Add to QBR cycle. Identify expansion opportunities — accounts at this health level are strong candidates for contract upgrade conversations.';
+    const contractNote = a.contract === 'Month-to-month'
+      ? `M-t-M contract increases structural churn risk. If health improves, initiate annual contract conversion conversation.`
+      : a.contract === 'One year'
+      ? `One-year contract provides near-term protection. Focus on adoption to ensure clean renewal.`
+      : `Two-year contract — lowest churn risk. Use this stability to drive expansion.`;
+
+    return `<strong>Account Analysis: ${a.name}</strong><br>
+<span style="color:var(--muted);font-size:12px">${a.id}</span><br><br>
+<strong>Health Score:</strong> ${a.health}/100 — <span style="color:${a.tier==='red'?'var(--red)':a.tier==='amber'?'var(--amber)':'var(--green)'}">${tier}</span><br>
+<strong>Contract:</strong> ${a.contract} · <strong>Tenure:</strong> ${a.tenure} months · <strong>ARR:</strong> $${a.arr}/year<br>
+<strong>Services Adopted:</strong> ${a.services}/8 · <strong>Churn Indicator:</strong> ${a.churn ? '⚠ High risk' : 'Stable'}<br><br>
+<strong>Assessment:</strong> ${urgency}<br>
+${contractNote}<br><br>
+<strong>Recommended Next Action:</strong><br>
+${action}<br><br>
+<strong>30-Day Priority:</strong> ${a.services < 3
+  ? `Feature activation is the #1 lever. Target: reach 3+ services adopted within 30 days.`
+  : a.tier !== 'green'
+  ? `Services adoption is adequate. Focus on resolving support friction and strengthening the CSM relationship before renewal.`
+  : `Account is healthy. Schedule QBR and explore expansion or contract upgrade opportunity.`
+}`;
+  }
+
+  // Quick prompt match
+  for (const key of Object.keys(STATIC_RESPONSES)) {
+    if (prompt.includes(key.substring(0, 40))) return STATIC_RESPONSES[key];
+  }
+  return STATIC_RESPONSES[prompt] || null;
+}
+
+function runAI() {
   const prompt = document.getElementById('ai-input').value.trim();
   if (!prompt) return;
   const btn = document.getElementById('run-btn');
@@ -737,35 +855,28 @@ async function runAI() {
   btn.disabled = true;
   btn.textContent = 'Analyzing...';
   output.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div><span>Generating CS insight from portfolio data...</span></div>';
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:800,
-        system: SYSTEM_PROMPT,
-        messages:[{role:"user",content:prompt}]
-      })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const text = data.content?.[0]?.text || "No response generated.";
-    output.innerHTML = `<div class="ai-result">${formatResponse(text)}</div>`;
-  } catch(e) {
-    output.innerHTML = `<div style="color:var(--red);font-size:13px;padding:12px 0;">Error: ${e.message}. Please try again.</div>`;
-  }
-  btn.disabled = false;
-  btn.textContent = 'Generate ↗';
-}
 
-function formatResponse(text) {
-  return text
-    .replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g,'<em>$1</em>')
-    .replace(/^(#{1,3})\s(.+)$/gm,'<strong>$2</strong>')
-    .replace(/\n/g,'<br>');
+  // Extract account ID from prompt if present
+  const idMatch = prompt.match(/ID:\s*([A-Z0-9]+-[A-Z0-9]+)/);
+  const accountId = idMatch ? idMatch[1] : null;
+
+  setTimeout(() => {
+    const response = getStaticResponse(prompt, accountId);
+    if (response) {
+      output.innerHTML = `<div class="ai-result">${response}</div>`;
+    } else {
+      // Fallback for any custom typed queries
+      output.innerHTML = `<div class="ai-result"><strong>Portfolio Insight</strong><br><br>
+Based on the current portfolio data (100 accounts, 26% churn rate, 48% month-to-month):<br><br>
+The highest-impact CS actions available right now are:<br><br>
+<strong>1. Prioritise red-tier M-t-M accounts renewing within 90 days</strong> — this cohort has a 45.8% churn rate and represents recoverable ARR with targeted outreach.<br><br>
+<strong>2. Run an adoption activation campaign for accounts at &lt;3 services</strong> — accounts with 5+ services adopted have 2.4× better health scores. Activation is your highest-ROI lever.<br><br>
+<strong>3. Initiate contract conversion conversations with stable M-t-M accounts (&gt;6 months tenure)</strong> — moving M-t-M to annual cuts churn probability from ~46% to ~15%.<br><br>
+Use the account pills on the right to analyse specific at-risk accounts, or select a quick prompt for a deeper strategy view.</div>`;
+    }
+    btn.disabled = false;
+    btn.textContent = 'Generate ↗';
+  }, 900);
 }
 
 // ===== INIT =====
