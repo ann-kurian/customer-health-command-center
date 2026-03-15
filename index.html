@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Customer Health Command Center — ThousandEyes CS SP&O</title>
+<title>Customer Health Command Center — CS Analytics</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -182,9 +182,9 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">
-      <div class="logo-badge">SP&O · CS Ops</div>
+      <div class="logo-badge">CS Analytics</div>
       <div class="logo-title">Customer Health<br>Command Center</div>
-      <div class="logo-sub">ThousandEyes · Q1 2026</div>
+      <div class="logo-sub">SaaS CS Dashboard · Q1 2026</div>
     </div>
     <div class="nav-label">Analytics</div>
     <div class="nav-item active" onclick="showScreen('overview', this)">
@@ -688,7 +688,7 @@ const QUICK_PROMPTS = [
   "What onboarding improvements would most reduce early churn in this dataset?"
 ];
 
-const SYSTEM_PROMPT = `You are a senior Customer Success Strategy & Planning (SP&O) analyst at Cisco ThousandEyes — a network intelligence SaaS platform. You specialize in turning customer health data into actionable CS strategy.
+const SYSTEM_PROMPT = `You are a senior Customer Success analyst specialising in strategy and operations for a B2B SaaS company. You specialise in turning customer health data into actionable CS strategy.
 
 Portfolio context (100 accounts generated from real IBM Telco Churn dataset distributions, Kaggle — reframed as enterprise SaaS accounts, seed=42):
 - 100 accounts in sample (7,043 in full Kaggle dataset)
